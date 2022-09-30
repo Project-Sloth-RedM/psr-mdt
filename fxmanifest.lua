@@ -2,8 +2,9 @@ fx_version 'cerulean'
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 
+
 author 'Flawws, Flakey, Idris and the Project Sloth team'
-description 'EchoRP MDT Rewrite for QBCore'
+description 'EchoRP MDT Rewrite for PSRCore'
 version '0.9.9'
 
 lua54 'yes'

@@ -1100,6 +1100,16 @@ $(document).ready(() => {
       }
     }
   };
+
+  // Keybind to close UI
+  document.addEventListener("keydown", (e) => {
+    if (e.keyCode === 27) {
+      // console.log("Escape pressed")
+      $.post(`https://${GetParentResourceName()}/escape`, JSON.stringify({}));
+    }
+  
+  });
+
   $(".manage-incidents-tags-add-btn").click(function () {
     if ($(".tag-incident-input")[0]) {
       $(this).removeClass("fa-minus").addClass("fa-plus");
@@ -1273,7 +1283,7 @@ $(document).ready(() => {
       var template = "";
       if ($(".badge-logo").attr("src") == "img/ems_badge.png") {
         template =
-          "ICU Room #: [ # ]\n\nReport ID: [ Report ID ]\n\nTime Admitted: [ Date and Time Here ]\n\nSurgery: [Yes/No]\n\nInjuries/Ailments:\n - [ Enter List Of Injuries Here ]\n\n\nAdditional Attending:\n - [ List Any Other Staff Here ]\n\n\n🧑‍🤝‍🧑 Additonal Emergency Contacts:\n - [ Name And Number ]\n\n\nNotes:\n[Additional Notes Here]";
+          "ICU Room #: [ # ]\n\nReport ID: [ Report ID ]\n\nTime Admitted: [ Date and Time Here ]\n\nSurgery: [Yes/No]\n\nInjuries/Ailments:\n - [ Enter List Of Injuries Here ]\n\n\nAdditional Attending:\n - [ List Any Other Staff Here ]\n\n\n🧑‍🤝‍🧑 Additional Emergency Contacts:\n - [ Name And Number ]\n\n\nNotes:\n[Additional Notes Here]";
       }
       $(".manage-bolos-editing-title").html(
         "You are currently creating a new BOLO"
@@ -2501,177 +2511,177 @@ $(document).ready(() => {
     }
   });
 
-  $("#dmv-search-input").keydown(async function (e) {
-    if (e.keyCode === 13 && canSearchForVehicles == true) {
-      let name = $("#dmv-search-input").val();
-      if (name !== "") {
-        canSearchForVehicles = false;
-        $(".dmv-items").empty();
-        $(".dmv-items").prepend(`<div class="profile-loader"></div>`);
+  // $("#dmv-search-input").keydown(async function (e) {
+  //   if (e.keyCode === 13 && canSearchForVehicles == true) {
+  //     let name = $("#dmv-search-input").val();
+  //     if (name !== "") {
+  //       canSearchForVehicles = false;
+  //       $(".dmv-items").empty();
+  //       $(".dmv-items").prepend(`<div class="profile-loader"></div>`);
 
-        let result = await $.post(
-          `https://${GetParentResourceName()}/searchVehicles`,
-          JSON.stringify({
-            name: name,
-          })
-        );
-        if (result.length === 0) {
-          $(".dmv-items").html(
-            `
-                            <div class="profile-item" data-id="0">
+  //       let result = await $.post(
+  //         `https://${GetParentResourceName()}/searchVehicles`,
+  //         JSON.stringify({
+  //           name: name,
+  //         })
+  //       );
+  //       if (result.length === 0) {
+  //         $(".dmv-items").html(
+  //           `
+  //                           <div class="profile-item" data-id="0">
 
-                                <div style="display: flex; flex-direction: column; margin-top: 2.5px; margin-left: 5px; width: 100%; padding: 5px;">
-                                <div style="display: flex; flex-direction: column;">
-                                    <div class="profile-item-title">No Vehicles Matching that search</div>
-                                    </div>
-                                    <div class="profile-bottom-info">
-                                    </div>
-                                </div>
-                            </div>
-                    `
-          );
-          canSearchForVehicles = true;
-          return true;
-        }
-        $(".dmv-items").empty();
+  //                               <div style="display: flex; flex-direction: column; margin-top: 2.5px; margin-left: 5px; width: 100%; padding: 5px;">
+  //                               <div style="display: flex; flex-direction: column;">
+  //                                   <div class="profile-item-title">No Vehicles Matching that search</div>
+  //                                   </div>
+  //                                   <div class="profile-bottom-info">
+  //                                   </div>
+  //                               </div>
+  //                           </div>
+  //                   `
+  //         );
+  //         canSearchForVehicles = true;
+  //         return true;
+  //       }
+  //       $(".dmv-items").empty();
 
-        let vehicleHTML = "";
+  //       let vehicleHTML = "";
 
-        result.forEach((value) => {
-          let paint = value.color;
-          let impound = "red-tag";
-          let bolo = "red-tag";
-          let codefive = "red-tag";
-          let stolen = "red-tag";
+  //       result.forEach((value) => {
+  //         let paint = value.color;
+  //         let impound = "red-tag";
+  //         let bolo = "red-tag";
+  //         let codefive = "red-tag";
+  //         let stolen = "red-tag";
 
-          if (value.state == 'Impounded') {
-            impound = "green-tag";
-          }
+  //         if (value.state == 'Impounded') {
+  //           impound = "green-tag";
+  //         }
 
-          if (value.bolo) {
-            bolo = "green-tag";
-          }
+  //         if (value.bolo) {
+  //           bolo = "green-tag";
+  //         }
 
-          if (value.code) {
-            codefive = "green-tag";
-          }
+  //         if (value.code) {
+  //           codefive = "green-tag";
+  //         }
 
-          if (value.stolen) {
-            stolen = "green-tag";
-          }
+  //         if (value.stolen) {
+  //           stolen = "green-tag";
+  //         }
 
-          vehicleHTML += `
-                        <div class="dmv-item" data-id="${value.id}" data-dbid="${value.dbid}" data-plate="${value.plate}">
-                            <img src="${value.image}" class="dmv-image">
-                            <div style="display: flex; flex-direction: column; margin-top: 2.5px; margin-left: 5px; width: 100%; padding: 5px;">
-                            <div style="display: flex; flex-direction: column;">
-                                <div class="dmv-item-title">${value.model}</div>
-                                    <div class="dmv-tags">
-                                        <div class="dmv-tag ${paint}-color">${value.colorName}</div>
-                                        <div class="dmv-tag ${impound}">Impound</div>
-                                        <div class="dmv-tag ${bolo}">BOLO</div>
-                                        <div class="dmv-tag ${stolen}">Stolen</div>
-                                        <div class="dmv-tag ${codefive}">Code 5</div>
-                                    </div>
-                                </div>
-                                <div class="dmv-bottom-info">
-                                    <div class="dmv-id">Plate: ${value.plate} · Owner: ${value.owner}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-        });
+  //         vehicleHTML += `
+  //                       <div class="dmv-item" data-id="${value.id}" data-dbid="${value.dbid}" data-plate="${value.plate}">
+  //                           <img src="${value.image}" class="dmv-image">
+  //                           <div style="display: flex; flex-direction: column; margin-top: 2.5px; margin-left: 5px; width: 100%; padding: 5px;">
+  //                           <div style="display: flex; flex-direction: column;">
+  //                               <div class="dmv-item-title">${value.model}</div>
+  //                                   <div class="dmv-tags">
+  //                                       <div class="dmv-tag ${paint}-color">${value.colorName}</div>
+  //                                       <div class="dmv-tag ${impound}">Impound</div>
+  //                                       <div class="dmv-tag ${bolo}">BOLO</div>
+  //                                       <div class="dmv-tag ${stolen}">Stolen</div>
+  //                                       <div class="dmv-tag ${codefive}">Code 5</div>
+  //                                   </div>
+  //                               </div>
+  //                               <div class="dmv-bottom-info">
+  //                                   <div class="dmv-id">Plate: ${value.plate} · Owner: ${value.owner}</div>
+  //                               </div>
+  //                           </div>
+  //                       </div>
+  //                   `;
+  //       });
 
-        $(".dmv-items").html(vehicleHTML);
+  //       $(".dmv-items").html(vehicleHTML);
 
-        canSearchForVehicles = true;
+  //       canSearchForVehicles = true;
 
-      }
-    }
-  });
+  //     }
+  //   }
+  // });
 
-  $(".dmv-items").on("click", ".dmv-item", function () {
-    $.post(
-      `https://${GetParentResourceName()}/getVehicleData`,
-      JSON.stringify({
-        plate: $(this).data("plate"),
-      })
-    );
-  });
+  // $(".dmv-items").on("click", ".dmv-item", function () {
+  //   $.post(
+  //     `https://${GetParentResourceName()}/getVehicleData`,
+  //     JSON.stringify({
+  //       plate: $(this).data("plate"),
+  //     })
+  //   );
+  // });
 
-  $(".vehicle-information-title-holder").on(
-    "click",
-    ".vehicle-information-save",
-    function () {
-      if (canSaveVehicle) {
-        canSaveVehicle = false;
-        $(".vehicle-information-save").empty();
-        $(".vehicle-information-save").prepend(
-          `<span class="fas fa-check"></span>`
-        );
-        setTimeout(() => {
-          $(".vehicle-information-save").empty();
-          $(".vehicle-information-save").html("Save");
-          canSaveVehicle = true;
-        }, 750);
-        setTimeout(() => {
-          let dbid = $(".vehicle-information-title-holder").data(
-            "dbid"
-          );
-          let plate = $(".vehicle-info-plate-input").val();
-          let notes = $(".vehicle-info-content").val();
+  // $(".vehicle-information-title-holder").on(
+  //   "click",
+  //   ".vehicle-information-save",
+  //   function () {
+  //     if (canSaveVehicle) {
+  //       canSaveVehicle = false;
+  //       $(".vehicle-information-save").empty();
+  //       $(".vehicle-information-save").prepend(
+  //         `<span class="fas fa-check"></span>`
+  //       );
+  //       setTimeout(() => {
+  //         $(".vehicle-information-save").empty();
+  //         $(".vehicle-information-save").html("Save");
+  //         canSaveVehicle = true;
+  //       }, 750);
+  //       setTimeout(() => {
+  //         let dbid = $(".vehicle-information-title-holder").data(
+  //           "dbid"
+  //         );
+  //         let plate = $(".vehicle-info-plate-input").val();
+  //         let notes = $(".vehicle-info-content").val();
 
-          let imageurl = $(".vehicle-info-image").attr("src");
-          let newImageurl = $(".vehicle-info-imageurl-input").val();
-          if (newImageurl.includes("base64")) {
-            imageurl = "img/not-found.webp";
-          } else {
-            imageurl = newImageurl;
-          }
+  //         let imageurl = $(".vehicle-info-image").attr("src");
+  //         let newImageurl = $(".vehicle-info-imageurl-input").val();
+  //         if (newImageurl.includes("base64")) {
+  //           imageurl = "img/not-found.webp";
+  //         } else {
+  //           imageurl = newImageurl;
+  //         }
 
-          let code5 = false;
-          let code5tag = $(".vehicle-tags").find(".code5-tag");
-          if (code5tag.hasClass("green-tag")) {
-            code5 = true
-          }
+  //         let code5 = false;
+  //         let code5tag = $(".vehicle-tags").find(".code5-tag");
+  //         if (code5tag.hasClass("green-tag")) {
+  //           code5 = true
+  //         }
 
-          let stolen = false;
-          let stolentag = $(".vehicle-tags").find(".stolen-tag");
-          if (stolentag.hasClass("green-tag")) {
-            stolen = true
-          }
+  //         let stolen = false;
+  //         let stolentag = $(".vehicle-tags").find(".stolen-tag");
+  //         if (stolentag.hasClass("green-tag")) {
+  //           stolen = true
+  //         }
 
-          let impoundInfo = {}
-          impoundInfo.impoundActive = $(".vehicle-tags").find(".impound-tag").hasClass("green-tag")
-          impoundInfo.impoundChanged = impoundChanged
-          if (impoundChanged === true) {
-            if (impoundInfo.impoundActive === true) {
-              impoundInfo.plate = $(".impound-plate").val();
-              impoundInfo.linkedreport = $(".impound-linkedreport").val();
-              impoundInfo.fee = $(".impound-fee").val();
-              impoundInfo.time = $(".impound-time").val();
-            }
-          }
+  //         let impoundInfo = {}
+  //         impoundInfo.impoundActive = $(".vehicle-tags").find(".impound-tag").hasClass("green-tag")
+  //         impoundInfo.impoundChanged = impoundChanged
+  //         if (impoundChanged === true) {
+  //           if (impoundInfo.impoundActive === true) {
+  //             impoundInfo.plate = $(".impound-plate").val();
+  //             impoundInfo.linkedreport = $(".impound-linkedreport").val();
+  //             impoundInfo.fee = $(".impound-fee").val();
+  //             impoundInfo.time = $(".impound-time").val();
+  //           }
+  //         }
 
-          $.post(
-            `https://${GetParentResourceName()}/saveVehicleInfo`,
-            JSON.stringify({
-              dbid: dbid,
-              plate: plate,
-              imageurl: imageurl,
-              notes: notes,
-              stolen: stolen,
-              code5: code5,
-              impound: impoundInfo,
-            })
-          );
+  //         $.post(
+  //           `https://${GetParentResourceName()}/saveVehicleInfo`,
+  //           JSON.stringify({
+  //             dbid: dbid,
+  //             plate: plate,
+  //             imageurl: imageurl,
+  //             notes: notes,
+  //             stolen: stolen,
+  //             code5: code5,
+  //             impound: impoundInfo,
+  //           })
+  //         );
 
-          impoundChanged = false;
-          $(".vehicle-info-image").attr("src", newImageurl);
-        }, 250);
-      }
-    }
-  );
+  //         impoundChanged = false;
+  //         $(".vehicle-info-image").attr("src", newImageurl);
+  //       }, 250);
+  //     }
+  //   }
+  // );
 
   $(".contextmenu").on("click", ".mark-code-5", function () {
     let tag = $(".vehicle-tags").find(".code5-tag");

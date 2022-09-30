@@ -1,4 +1,4 @@
--- local QBCore = exports['qb-core']:GetCoreObject()
+local PSRCore = exports['psr-core']:GetCoreObject()
 -- Maybe cache?
 local incidents = {}
 local convictions = {}
@@ -30,7 +30,7 @@ end
 
 
 
-RegisterServerEvent("ps-mdt:dispatchStatus", function(bool)
+RegisterServerEvent("psr-mdt:dispatchStatus", function(bool)
 	isDispatchRunning = bool
 end)
 
@@ -38,17 +38,17 @@ if Config.UseWolfknightRadar == true then
 	RegisterNetEvent("wk:onPlateScanned")
 	AddEventHandler("wk:onPlateScanned", function(cam, plate, index)
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		local bolo = GetBoloStatus(plate)
 		if bolo == true then
 			TriggerClientEvent("wk:togglePlateLock", src, cam, true, bolo)
 		end
 	end)
 end
-RegisterNetEvent("ps-mdt:server:OnPlayerUnload", function()
+RegisterNetEvent("psr-mdt:server:OnPlayerUnload", function()
 	--// Delete player from the MDT on logout
 	local src = source
-	local player = exports['qbr-core']:GetPlayer(src)
+	local player = PSRCore.Functions.GetPlayer(src)
 	if GetActiveData(player.PlayerData.citizenid) then
 		activeUnits[player.PlayerData.citizenid] = nil
 	end
@@ -57,13 +57,13 @@ end)
 AddEventHandler("playerDropped", function(reason)
 	--// Delete player from the MDT on logout
 	local src = source
-	local player = exports['qbr-core']:GetPlayer(src)
+	local player = PSRCore.Functions.GetPlayer(src)
 	if player ~= nil then
 		if GetActiveData(player.PlayerData.citizenid) then
 			activeUnits[player.PlayerData.citizenid] = nil
 		end
 	else
-		local license = exports['qbr-core']:GetIdentifier(src, "license")
+		local license = PSRCore.Functions.GetIdentifier(src, "license")
 		local citizenids = GetCitizenID(license)
 
 		for _, v in pairs(citizenids) do
@@ -74,9 +74,9 @@ AddEventHandler("playerDropped", function(reason)
 	end
 end)
 
-RegisterNetEvent("ps-mdt:server:ToggleDuty", function()
+RegisterNetEvent("psr-mdt:server:ToggleDuty", function()
     local src = source
-    local player = exports['qbr-core']:GetPlayer(src)
+    local player = PSRCore.Functions.GetPlayer(src)
     if not player.PlayerData.job.onduty then
 	--// Remove from MDT
 	if GetActiveData(player.PlayerData.citizenid) then
@@ -106,16 +106,16 @@ RegisterNetEvent('mdt:server:openMDT', function()
 
 	local JobType = GetJobType(PlayerData.job.name)
 	local bulletin = GetBulletins(JobType)
-	local calls = exports['ps-dispatch']:GetDispatchCalls()	
+	local calls = exports['psr-dispatch']:GetDispatchCalls()	
 	--TriggerClientEvent('mdt:client:dashboardbulletin', src, bulletin)
 	TriggerClientEvent('mdt:client:open', src, bulletin, activeUnits, calls, PlayerData.citizenid)
 	--TriggerClientEvent('mdt:client:GetActiveUnits', src, activeUnits)
 end)
 
-exports['qbr-core']:CreateCallback('mdt:server:SearchProfile', function(source, cb, sentData)
+PSRCore.Functions.CreateCallback('mdt:server:SearchProfile', function(source, cb, sentData)
 	if not sentData then  return cb({}) end
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType ~= nil then
@@ -152,7 +152,7 @@ exports['qbr-core']:CreateCallback('mdt:server:SearchProfile', function(source, 
 	return cb({})
 end)
 
-exports['qbr-core']:CreateCallback("mdt:server:getWarrants", function(source, cb)
+PSRCore.Functions.CreateCallback("mdt:server:getWarrants", function(source, cb)
     local WarrantData = {}
     local data = MySQL.query.await("SELECT * FROM mdt_convictions", {})
     for _, value in pairs(data) do
@@ -168,7 +168,7 @@ exports['qbr-core']:CreateCallback("mdt:server:getWarrants", function(source, cb
     cb(WarrantData)
 end)
 
-exports['qbr-core']:CreateCallback('mdt:server:OpenDashboard', function(source, cb)
+PSRCore.Functions.CreateCallback('mdt:server:OpenDashboard', function(source, cb)
 	local PlayerData = GetPlayerData(source)
 	if not PermCheck(source, PlayerData) then return end
 	local JobType = GetJobType(PlayerData.job.name)
@@ -205,7 +205,7 @@ RegisterNetEvent('mdt:server:deleteBulletin', function(id, title)
 	AddLog("Bulletin with Title: "..title.." was deleted by " .. GetNameFromPlayerData(PlayerData) .. ".")
 end)
 
-exports['qbr-core']:CreateCallback('mdt:server:GetProfileData', function(source, cb, sentId)
+PSRCore.Functions.CreateCallback('mdt:server:GetProfileData', function(source, cb, sentId)
 	if not sentId then return cb({}) end
 
 	local src = source
@@ -223,10 +223,10 @@ exports['qbr-core']:CreateCallback('mdt:server:GetProfileData', function(source,
 	if type(target.metadata) == 'string' then target.metadata = json.decode(target.metadata) end
 
 	local licencesdata = target.metadata['licences'] or {
-        ['driver'] = false,
+        -- ['driver'] = false,
         ['business'] = false,
         ['weapon'] = false,
-		['pilot'] = false
+		-- ['pilot'] = false
 	}
 
 	local job, grade = UnpackJob(target.job)
@@ -249,52 +249,52 @@ exports['qbr-core']:CreateCallback('mdt:server:GetProfileData', function(source,
 		isLimited = false
 	}
 
-	-- if Config.PoliceJobs[JobName] then
-	-- 	local convictions = GetConvictions({person.cid})
-	-- 	person.convictions2 = {}
-	-- 	local convCount = 1
-	-- 	if next(convictions) then
-	-- 		for _, conv in pairs(convictions) do
-	-- 			if conv.warrant then person.warrant = true end
-	-- 			local charges = json.decode(conv.charges)
-	-- 			for _, charge in pairs(charges) do
-	-- 				person.convictions2[convCount] = charge
-	-- 				convCount = convCount + 1
-	-- 			end
-	-- 		end
-	-- 	end
-	-- 	local hash = {}
-	-- 	person.convictions = {}
+	if Config.PoliceJobs[JobName] then
+		local convictions = GetConvictions({person.cid})
+		person.convictions2 = {}
+		local convCount = 1
+		if next(convictions) then
+			for _, conv in pairs(convictions) do
+				if conv.warrant then person.warrant = true end
+				local charges = json.decode(conv.charges)
+				for _, charge in pairs(charges) do
+					person.convictions2[convCount] = charge
+					convCount = convCount + 1
+				end
+			end
+		end
+		local hash = {}
+		person.convictions = {}
 
-	-- 	for _,v in ipairs(person.convictions2) do
-	-- 		if (not hash[v]) then
-	-- 			person.convictions[#person.convictions+1] = v -- found this dedupe method on sourceforge somewhere, copy+pasta dev, needs to be refined later
-	-- 			hash[v] = true
-	-- 		end
-	-- 	end
-	-- 	local vehicles = GetPlayerVehicles(person.cid)
+		for _,v in ipairs(person.convictions2) do
+			if (not hash[v]) then
+				person.convictions[#person.convictions+1] = v -- found this dedupe method on sourceforge somewhere, copy+pasta dev, needs to be refined later
+				hash[v] = true
+			end
+		end
+		-- local vehicles = GetPlayerVehicles(person.cid)
 
-	-- 	if vehicles then
-	-- 		person.vehicles = vehicles
-	-- 	end
-	-- 	local Coords = {}
-	-- 	local Houses = {}
-	-- 	local properties= GetPlayerProperties(person.cid)
-	-- 	for k, v in pairs(properties) do
-	-- 		Coords[#Coords+1] = {
-    --             coords = json.decode(v["coords"]),
-    --         }
-	-- 	end
-	-- 	for index = 1, #Coords, 1 do
-	-- 		Houses[#Houses+1] = {
-    --             label = properties[index]["label"],
-    --             coords = tostring(Coords[index]["coords"]["enter"]["x"]..",".. Coords[index]["coords"]["enter"]["y"].. ",".. Coords[index]["coords"]["enter"]["z"]),
-    --         }
-    --     end
-	-- 	-- if properties then
-	-- 		person.properties = Houses
-	-- 	-- end
-	-- end
+		-- if vehicles then
+		-- 	person.vehicles = vehicles
+		-- end
+		-- local Coords = {}
+		-- local Houses = {}
+		-- local properties= GetPlayerProperties(person.cid)
+		-- for k, v in pairs(properties) do
+		-- 	Coords[#Coords+1] = {
+        --         coords = json.decode(v["coords"]),
+        --     }
+		-- end
+		-- for index = 1, #Coords, 1 do
+		-- 	Houses[#Houses+1] = {
+        --         label = properties[index]["label"],
+        --         coords = tostring(Coords[index]["coords"]["enter"]["x"]..",".. Coords[index]["coords"]["enter"]["y"].. ",".. Coords[index]["coords"]["enter"]["z"]),
+        --     }
+        -- end
+		-- -- if properties then
+		-- 	person.properties = Houses
+		-- -- end
+	end
 
 	local mdtData = GetPersonInformation(sentId, JobType)
 	if mdtData then
@@ -316,7 +316,7 @@ end)
 
 RegisterNetEvent("mdt:server:saveProfile", function(pfp, information, cid, fName, sName, tags, gallery, fingerprint, licenses)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	ManageLicenses(cid, licenses)
 	if Player then
 		local JobType = GetJobType(Player.PlayerData.job.name)
@@ -335,7 +335,7 @@ end)
 
 RegisterNetEvent("mdt:server:updateLicense", function(cid, type, status)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		if GetJobType(Player.PlayerData.job.name) == 'police' then
 			ManageLicense(cid, type, status)
@@ -348,7 +348,7 @@ end)
 
 RegisterNetEvent('mdt:server:getAllIncidents', function()
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'police' or JobType == 'doj' then
@@ -362,7 +362,7 @@ end)
 RegisterNetEvent('mdt:server:searchIncidents', function(query)
 	if query then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			local JobType = GetJobType(Player.PlayerData.job.name)
 			if JobType == 'police' or JobType == 'doj' then
@@ -379,7 +379,7 @@ end)
 RegisterNetEvent('mdt:server:getIncidentData', function(sentId)
 	if sentId then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			local JobType = GetJobType(Player.PlayerData.job.name)
 			if JobType == 'police' or JobType == 'doj' then
@@ -415,7 +415,7 @@ end)
 
 RegisterNetEvent('mdt:server:getAllBolos', function()
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local JobType = GetJobType(Player.PlayerData.job.name)
 	if JobType == 'police' or JobType == 'ambulance' then
 		local matches = MySQL.query.await("SELECT * FROM `mdt_bolos` WHERE jobtype = :jobtype", {jobtype = JobType})
@@ -426,7 +426,7 @@ end)
 RegisterNetEvent('mdt:server:searchBolos', function(sentSearch)
 	if sentSearch then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'police' or JobType == 'ambulance' then
 			local matches = MySQL.query.await("SELECT * FROM `mdt_bolos` WHERE `id` LIKE :query OR LOWER(`title`) LIKE :query OR `plate` LIKE :query OR LOWER(`owner`) LIKE :query OR LOWER(`individual`) LIKE :query OR LOWER(`detail`) LIKE :query OR LOWER(`officersinvolved`) LIKE :query OR LOWER(`tags`) LIKE :query OR LOWER(`author`) LIKE :query AND jobtype = :jobtype", {
@@ -441,7 +441,7 @@ end)
 RegisterNetEvent('mdt:server:getBoloData', function(sentId)
 	if sentId then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'police' or JobType == 'ambulance' then
 			local matches = MySQL.query.await("SELECT * FROM `mdt_bolos` WHERE `id` = :id AND jobtype = :jobtype LIMIT 1", {
@@ -461,7 +461,7 @@ end)
 RegisterNetEvent('mdt:server:newBolo', function(existing, id, title, plate, owner, individual, detail, tags, gallery, officersinvolved, time)
 	if id then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'police' or JobType == 'ambulance' then
 			local fullname = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname
@@ -519,7 +519,7 @@ end)
 RegisterNetEvent('mdt:server:deleteBolo', function(id)
 	if id then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'police' then
 			local fullname = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname
@@ -532,7 +532,7 @@ end)
 RegisterNetEvent('mdt:server:deleteICU', function(id)
 	if id then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'ambulance' then
 			local fullname = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname
@@ -545,7 +545,7 @@ end)
 RegisterNetEvent('mdt:server:incidentSearchPerson', function(query)
     if query then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			local JobType = GetJobType(Player.PlayerData.job.name)
 			if JobType == 'police' or JobType == 'doj' then
@@ -572,7 +572,7 @@ end)
 
 RegisterNetEvent('mdt:server:getAllReports', function()
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'police' or JobType == 'doj' or JobType == 'ambulance' then
@@ -588,7 +588,7 @@ end)
 RegisterNetEvent('mdt:server:getReportData', function(sentId)
 	if sentId then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			local JobType = GetJobType(Player.PlayerData.job.name)
 			if JobType == 'police' or JobType == 'doj' or JobType == 'ambulance' then
@@ -611,7 +611,7 @@ end)
 RegisterNetEvent('mdt:server:searchReports', function(sentSearch)
 	if sentSearch then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			local JobType = GetJobType(Player.PlayerData.job.name)
 			if JobType == 'police' or JobType == 'doj' or JobType == 'ambulance' then
@@ -630,7 +630,7 @@ end)
 RegisterNetEvent('mdt:server:newReport', function(existing, id, title, reporttype, details, tags, gallery, officers, civilians, time)
 	if id then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			local JobType = GetJobType(Player.PlayerData.job.name)
 			if JobType ~= nil then
@@ -684,14 +684,14 @@ RegisterNetEvent('mdt:server:newReport', function(existing, id, title, reporttyp
 	end
 end)
 
-exports['qbr-core']:CreateCallback('mdt:server:SearchVehicles', function(source, cb, sentData)
+PSRCore.Functions.CreateCallback('mdt:server:SearchVehicles', function(source, cb, sentData)
 	if not sentData then  return cb({}) end
 	local src = source
 	local PlayerData = GetPlayerData(src)
 	if not PermCheck(source, PlayerData) then return cb({}) end
 
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		local JobType = GetJobType(Player.PlayerData.job.name)
 		if JobType == 'police' or JobType == 'doj' then
@@ -742,7 +742,7 @@ end)
 RegisterNetEvent('mdt:server:getVehicleData', function(plate)
 	if plate then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			local JobType = GetJobType(Player.PlayerData.job.name)
 			if JobType == 'police' or JobType == 'doj' then
@@ -787,7 +787,7 @@ end)
 RegisterNetEvent('mdt:server:saveVehicleInfo', function(dbid, plate, imageurl, notes, stolen, code5, impoundInfo)
 	if plate then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			if GetJobType(Player.PlayerData.job.name) == 'police' then
 				if dbid == nil then dbid = 0 end;
@@ -851,7 +851,7 @@ RegisterNetEvent('mdt:server:saveVehicleInfo', function(dbid, plate, imageurl, n
 
 								result.currentSelection = impoundInfo.CurrentSelection
 								result.plate = plate
-								TriggerClientEvent('ps-mdt:client:TakeOutImpound', src, result)
+								TriggerClientEvent('psr-mdt:client:TakeOutImpound', src, result)
 							end
 
 						end
@@ -864,7 +864,7 @@ end)
 
 RegisterNetEvent('mdt:server:getAllLogs', function()
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		if Config.LogPerms[Player.PlayerData.job.name] then
 			if Config.LogPerms[Player.PlayerData.job.name][Player.PlayerData.job.grade.level] then
@@ -921,13 +921,13 @@ RegisterNetEvent('mdt:server:getPenalCode', function()
 end)
 
 RegisterNetEvent('mdt:server:setCallsign', function(cid, newcallsign)
-	local Player = exports['qbr-core']:GetPlayerByCitizenId(cid)
+	local Player = PSRCore.Functions.GetPlayerByCitizenId(cid)
 	Player.Functions.SetMetaData("callsign", newcallsign)
 end)
 
 RegisterNetEvent('mdt:server:saveIncident', function(id, title, information, tags, officers, civilians, evidence, associated, time)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		if GetJobType(Player.PlayerData.job.name) == 'police' then
 			if id == 0 then
@@ -1032,12 +1032,12 @@ end)
 
 RegisterNetEvent('mdt:server:setWaypoint', function(callid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(source)
+	local Player = PSRCore.Functions.GetPlayer(source)
 	local JobType = GetJobType(Player.PlayerData.job.name)
 	if JobType == 'police' or JobType == 'ambulance' then
 		if callid then
 			if isDispatchRunning then
-				local calls = exports['ps-dispatch']:GetDispatchCalls()
+				local calls = exports['psr-dispatch']:GetDispatchCalls()
 				TriggerClientEvent('mdt:client:setWaypoint', src, calls[callid])
 			end
 		end
@@ -1046,7 +1046,7 @@ end)
 
 RegisterNetEvent('mdt:server:callDetach', function(callid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local playerdata = {
 		fullname = Player.PlayerData.charinfo.firstname.. " "..Player.PlayerData.charinfo.lastname,
 		job = Player.PlayerData.job,
@@ -1065,7 +1065,7 @@ end)
 
 RegisterNetEvent('mdt:server:callAttach', function(callid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local playerdata = {
 		fullname = Player.PlayerData.charinfo.firstname.. " "..Player.PlayerData.charinfo.lastname,
 		job = Player.PlayerData.job,
@@ -1085,12 +1085,12 @@ end)
 
 RegisterNetEvent('mdt:server:attachedUnits', function(callid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local JobType = GetJobType(Player.PlayerData.job.name)
 	if JobType == 'police' or JobType == 'ambulance' then
 		if callid then
 			if isDispatchRunning then
-				local calls = exports['ps-dispatch']:GetDispatchCalls()
+				local calls = exports['psr-dispatch']:GetDispatchCalls()
 				TriggerClientEvent('mdt:client:attachedUnits', src, calls[callid]['units'], callid)
 			end
 		end
@@ -1099,7 +1099,7 @@ end)
 
 RegisterNetEvent('mdt:server:callDispatchDetach', function(callid, cid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local playerdata = {
 		fullname = Player.PlayerData.charinfo.firstname.. " "..Player.PlayerData.charinfo.lastname,
 		job = Player.PlayerData.job,
@@ -1119,13 +1119,13 @@ end)
 
 RegisterNetEvent('mdt:server:setDispatchWaypoint', function(callid, cid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local callid = tonumber(callid)
 	local JobType = GetJobType(Player.PlayerData.job.name)
 	if JobType == 'police' or JobType == 'ambulance' then
 		if callid then
 			if isDispatchRunning then
-				local calls = exports['ps-dispatch']:GetDispatchCalls()
+				local calls = exports['psr-dispatch']:GetDispatchCalls()
 				TriggerClientEvent('mdt:client:setWaypoint', src, calls[callid])
 			end
 		end
@@ -1135,7 +1135,7 @@ end)
 
 RegisterNetEvent('mdt:server:callDragAttach', function(callid, cid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local playerdata = {
 		name = Player.PlayerData.charinfo.firstname.. " "..Player.PlayerData.charinfo.lastname,
 		job = Player.PlayerData.job.name,
@@ -1155,7 +1155,7 @@ end)
 
 RegisterNetEvent('mdt:server:setWaypoint:unit', function(cid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayerByCitizenId(cid)
+	local Player = PSRCore.Functions.GetPlayerByCitizenId(cid)
 	local PlayerCoords = GetEntityCoords(GetPlayerPed(Player.PlayerData.source))
 	TriggerClientEvent("mdt:client:setWaypoint:unit", src, PlayerCoords)
 end)
@@ -1165,7 +1165,7 @@ end)
 RegisterNetEvent('mdt:server:sendMessage', function(message, time)
 	if message and time then
 		local src = source
-		local Player = exports['qbr-core']:GetPlayer(src)
+		local Player = PSRCore.Functions.GetPlayer(src)
 		if Player then
 			MySQL.scalar("SELECT pfp FROM `mdt_data` WHERE cid=:id LIMIT 1", {
 				id = Player.PlayerData.citizenid -- % wildcard, needed to search for all alike results
@@ -1200,10 +1200,10 @@ end)
 
 RegisterNetEvent('mdt:server:getCallResponses', function(callid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if IsPolice(Player.PlayerData.job.name) then
 		if isDispatchRunning then
-			local calls = exports['ps-dispatch']:GetDispatchCalls()
+			local calls = exports['psr-dispatch']:GetDispatchCalls()
 			TriggerClientEvent('mdt:client:getCallResponses', src, calls[callid]['responses'], callid)
 		end
 	end
@@ -1211,7 +1211,7 @@ end)
 
 RegisterNetEvent('mdt:server:sendCallResponse', function(message, time, callid)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	local name = Player.PlayerData.charinfo.firstname.. " "..Player.PlayerData.charinfo.lastname
 	if IsPolice(Player.PlayerData.job.name) then
 		TriggerEvent('dispatch:sendCallResponse', src, callid, message, time, function(isGood)
@@ -1222,22 +1222,22 @@ RegisterNetEvent('mdt:server:sendCallResponse', function(message, time, callid)
 	end
 end)
 
--- RegisterNetEvent('mdt:server:setRadio', function(cid, newRadio)
--- 	local src = source
--- 	local Player = exports['qbr-core']:GetPlayer(src)
--- 	if Player.PlayerData.citizenid ~= cid then
--- 		TriggerClientEvent("QBCore:Notify", src, 'You can only change your radio!', 'error')
--- 		return
--- 	else
--- 		local radio = Player.Functions.GetItemByName("radio")
--- 		if radio ~= nil then
--- 			TriggerClientEvent('mdt:client:setRadio', src, newRadio)
--- 		else
--- 			TriggerClientEvent("QBCore:Notify", src, 'You do not have a radio!', 'error')
--- 		end
--- 	end
+RegisterNetEvent('mdt:server:setRadio', function(cid, newRadio)
+	local src = source
+	local Player = PSRCore.Functions.GetPlayer(src)
+	if Player.PlayerData.citizenid ~= cid then
+		TriggerClientEvent("PSRCore:Notify", src, 'You can only change your radio!', 'error')
+		return
+	else
+		local radio = Player.Functions.GetItemByName("radio")
+		if radio ~= nil then
+			TriggerClientEvent('mdt:client:setRadio', src, newRadio)
+		else
+			TriggerClientEvent("PSRCore:Notify", src, 'You do not have a radio!', 'error')
+		end
+	end
 
--- end)
+end)
 
 local function isRequestVehicle(vehId)
 	local found = false
@@ -1254,7 +1254,7 @@ exports('isRequestVehicle', isRequestVehicle) -- exports['erp_mdt']:isRequestVeh
 
 RegisterNetEvent('mdt:server:impoundVehicle', function(sentInfo, sentVehicle)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		if GetJobType(Player.PlayerData.job.name) == 'police' then
 			if sentInfo and type(sentInfo) == 'table' then
@@ -1299,7 +1299,7 @@ end)
 RegisterNetEvent('mdt:server:removeImpound', function(plate, currentSelection)
 	print("Removing impound", plate, currentSelection)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		if GetJobType(Player.PlayerData.job.name) == 'police' then
 			local result = MySQL.single.await("SELECT id, vehicle FROM `player_vehicles` WHERE plate=:plate LIMIT 1", { plate = string.gsub(plate, "^%s*(.-)%s*$", "%1")})
@@ -1314,7 +1314,7 @@ end)
 
 RegisterNetEvent('mdt:server:statusImpound', function(plate)
 	local src = source
-	local Player = exports['qbr-core']:GetPlayer(src)
+	local Player = PSRCore.Functions.GetPlayer(src)
 	if Player then
 		if GetJobType(Player.PlayerData.job.name) == 'police' then
 			local vehicle = MySQL.query.await("SELECT id, plate FROM `player_vehicles` WHERE plate=:plate LIMIT 1", { plate = string.gsub(plate, "^%s*(.-)%s*$", "%1")})

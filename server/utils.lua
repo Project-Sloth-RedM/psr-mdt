@@ -1,7 +1,7 @@
--- local QBCore = exports['qb-core']:GetCoreObject()
+local PSRCore = exports['psr-core']:GetCoreObject()
 
 function GetPlayerData(source)
-	local Player = exports['qbr-core']:GetPlayer(source)
+	local Player = PSRCore.Functions.GetPlayer(source)
 	return Player.PlayerData
 end
 

@@ -1,4 +1,4 @@
--- local QBCore = exports['qb-core']:GetCoreObject()
+local PSRCore = exports['psr-core']:GetCoreObject()
 
 -- Get CitizenIDs from Player License
 function GetCitizenID(license)
@@ -83,7 +83,7 @@ function GetPlayerProperties(cid, cb)
 end
 
 function GetPlayerDataById(id)
-    local Player = exports['qbr-core']:GetPlayerByCitizenId(id)
+    local Player = PSRCore.Functions.GetPlayerByCitizenId(id)
     if Player ~= nil then
 		local response = {citizenid = Player.PlayerData.citizenid, charinfo = Player.PlayerData.charinfo, metadata = Player.PlayerData.metadata, job = Player.PlayerData.job}
         return response
@@ -118,7 +118,7 @@ end
 
 function GetPlayerLicenses(identifier)
     local response = false
-    local Player = exports['qbr-core']:GetPlayerByCitizenId(identifier)
+    local Player = PSRCore.Functions.GetPlayerByCitizenId(identifier)
     if Player ~= nil then
         return Player.PlayerData.metadata.licences
     else
@@ -140,7 +140,7 @@ function GetPlayerLicenses(identifier)
 end
 
 function ManageLicense(identifier, type, status)
-    local Player = exports['qbr-core']:GetPlayerByCitizenId(identifier)
+    local Player = PSRCore.Functions.GetPlayerByCitizenId(identifier)
     local licenseStatus = nil
     if status == "give" then licenseStatus = true elseif status == "revoke" then licenseStatus = false end
     if Player ~= nil then
@@ -161,7 +161,7 @@ function ManageLicense(identifier, type, status)
 end
 
 function ManageLicenses(identifier, incomingLicenses)
-    local Player = exports['qbr-core']:GetPlayerByCitizenId(identifier)
+    local Player = PSRCore.Functions.GetPlayerByCitizenId(identifier)
     if Player ~= nil then
         Player.Functions.SetMetaData("licences", incomingLicenses)
 

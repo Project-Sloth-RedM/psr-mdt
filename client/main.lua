@@ -1,4 +1,4 @@
--- QBCore = exports['qb-core']:GetCoreObject()
+QBCore = exports['psr-core']:GetCoreObject()
 local PlayerData = {}
 local CurrentCops = 0
 local isOpen = false
@@ -12,20 +12,20 @@ local callSign = ""
 -- local tabletRot = vector3(10.0, 160.0, 0.0)
 
 CreateThread(function()
-    if GetResourceState('ps-dispatch') == 'started' then
-        TriggerServerEvent("ps-mdt:dispatchStatus", true)
+    if GetResourceState('psr-dispatch') == 'started' then
+        TriggerServerEvent("psr-mdt:dispatchStatus", true)
     end
 end)
 
 
 -- Events from qbcore
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
-    PlayerData = exports['qbr-core']:GetPlayerData()
+    PlayerData = QBCore.Functions.GetPlayerData()
     callSign = PlayerData.metadata.callsign
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
-    TriggerServerEvent("ps-mdt:server:OnPlayerUnload")
+    TriggerServerEvent("psr-mdt:server:OnPlayerUnload")
     PlayerData = {}
 end)
 
@@ -39,7 +39,7 @@ end)
 
 RegisterNetEvent("QBCore:Client:SetDuty", function(job, state)
     if AllowedJob(job) then
-        TriggerServerEvent("ps-mdt:server:ToggleDuty")
+        TriggerServerEvent("psr-mdt:server:ToggleDuty")
     end
 end)
 
@@ -54,7 +54,7 @@ end)
 AddEventHandler('onResourceStart', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
     Wait(150)
-    PlayerData = exports['qbr-core']:GetPlayerData()
+    PlayerData = QBCore.Functions.GetPlayerData()
     callSign = PlayerData.metadata.callsign
 end)
 
@@ -64,17 +64,17 @@ end)
 ------------------------------------------
 --====================================================================================\
 
--- RegisterKeyMapping('mdt', 'Open Police MDT', 'keyboard', 'k')
+RegisterKeyMapping('mdt', 'Open Police MDT', 'keyboard', 'k')
 
 RegisterCommand('mdt', function()
     local plyPed = PlayerPedId()
-    PlayerData = exports['qbr-core']:GetPlayerData()
+    PlayerData = QBCore.Functions.GetPlayerData()
     if not PlayerData.metadata["isdead"] and not PlayerData.metadata["inlaststand"] and not PlayerData.metadata["ishandcuffed"] and not IsPauseMenuActive() then
         if GetJobType(PlayerData.job.name) ~= nil then
             TriggerServerEvent('mdt:server:openMDT')
         end
     else
-        exports['qbr-core']:Notify("Can't do that!", "error")
+        QBCore.Functions.Notify("Can't do that!", "error")
     end
 end, false)
 
@@ -182,7 +182,7 @@ RegisterNetEvent('mdt:client:dashboardbulletin', function(sentData)
 end)
 
 RegisterNetEvent('mdt:client:dashboardWarrants', function()
-    exports['qbr-core']:TriggerCallback("mdt:server:getWarrants", function(data)
+    QBCore.Functions.TriggerCallback("mdt:server:getWarrants", function(data)
         if data then
             SendNUIMessage({ type = "warrants", data = data })
         end
@@ -218,28 +218,28 @@ RegisterNetEvent('mdt:client:deleteBulletin', function(ignoreId, sentData, job)
     end
 end)
 
-RegisterNetEvent('mdt:client:open', function(bulletin, activeUnits, calls, cid)
+RegisterNetEvent('mdt:client:open', function()
     EnableGUI(true)
-    local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
+    -- local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
 
-    local currentStreetHash, intersectStreetHash = GetStreetNameAtCoord(x, y, z)
-    local currentStreetName = GetStreetNameFromHashKey(currentStreetHash)
-    local intersectStreetName = GetStreetNameFromHashKey(intersectStreetHash)
-    local zone = tostring(GetNameOfZone(x, y, z))
-    local area = GetLabelText(zone)
-    local playerStreetsLocation = area
+    -- local currentStreetHash, intersectStreetHash = GetStreetNameAtCoord(x, y, z)
+    -- local currentStreetName = GetStreetNameFromHashKey(currentStreetHash)
+    -- local intersectStreetName = GetStreetNameFromHashKey(intersectStreetHash)
+    -- local zone = tostring(GetNameOfZone(x, y, z))
+    -- local area = GetLabelText(zone)
+    -- local playerStreetsLocation = area
 
-    if not zone then zone = "UNKNOWN" end;
+    -- if not zone then zone = "UNKNOWN" end;
 
-    if intersectStreetName ~= nil and intersectStreetName ~= "" then playerStreetsLocation = currentStreetName .. ", " .. intersectStreetName .. ", " .. area
-    elseif currentStreetName ~= nil and currentStreetName ~= "" then playerStreetsLocation = currentStreetName .. ", " .. area
-    else playerStreetsLocation = area end
+    -- if intersectStreetName ~= nil and intersectStreetName ~= "" then playerStreetsLocation = currentStreetName .. ", " .. intersectStreetName .. ", " .. area
+    -- elseif currentStreetName ~= nil and currentStreetName ~= "" then playerStreetsLocation = currentStreetName .. ", " .. area
+    -- else playerStreetsLocation = area end
 
-    -- local grade = PlayerData.job.grade.name
+    -- -- local grade = PlayerData.job.grade.name
 
-    SendNUIMessage({ type = "data", activeUnits = activeUnits, citizenid = cid, ondutyonly = Config.OnlyShowOnDuty, name = "Welcome, " ..PlayerData.job.grade.name..' '..PlayerData.charinfo.lastname:sub(1,1):upper()..PlayerData.charinfo.lastname:sub(2), location = playerStreetsLocation, fullname = PlayerData.charinfo.firstname..' '..PlayerData.charinfo.lastname, bulletin = bulletin })
-    SendNUIMessage({ type = "calls", data = calls })
-    TriggerEvent("mdt:client:dashboardWarrants")
+    -- SendNUIMessage({ type = "data", activeUnits = activeUnits, citizenid = cid, ondutyonly = Config.OnlyShowOnDuty, name = "Welcome, " ..PlayerData.job.grade.name..' '..PlayerData.charinfo.lastname:sub(1,1):upper()..PlayerData.charinfo.lastname:sub(2), location = playerStreetsLocation, fullname = PlayerData.charinfo.firstname..' '..PlayerData.charinfo.lastname, bulletin = bulletin })
+    -- SendNUIMessage({ type = "calls", data = calls })
+    -- TriggerEvent("mdt:client:dashboardWarrants")
 end)
 
 RegisterNetEvent('mdt:client:exitMDT', function()
@@ -255,7 +255,7 @@ end)
 RegisterNUICallback("searchProfiles", function(data, cb)
     local p = promise.new()
 
-    exports['qbr-core']:TriggerCallback('mdt:server:SearchProfile', function(result)
+    QBCore.Functions.TriggerCallback('mdt:server:SearchProfile', function(result)
         p:resolve(result)
     end, data.name)
 
@@ -290,7 +290,7 @@ RegisterNUICallback("getProfileData", function(data, cb)
     local getProfileDataPromise = function(data)
         if p then return end
         p = promise.new()
-        exports['qbr-core']:TriggerCallback('mdt:server:GetProfileData', function(result)
+        QBCore.Functions.TriggerCallback('mdt:server:GetProfileData', function(result)
             p:resolve(result)
         end, data)
         return Citizen.Await(p)
@@ -394,7 +394,7 @@ RegisterNUICallback('SetHouseLocation', function(data, cb)
         coords[#coords+1] = tonumber(word)
     end
     SetNewWaypoint(coords[1], coords[2])
-    exports['qbr-core']:Notify('GPS has been set!', 'success')
+    QBCore.Functions.Notify('GPS has been set!', 'success')
 end)
 
 --====================================================================================
@@ -533,7 +533,7 @@ RegisterNUICallback("searchVehicles", function(data, cb)
 
     local p = promise.new()
 
-    exports['qbr-core']:TriggerCallback('mdt:server:SearchVehicles', function(result)
+    QBCore.Functions.TriggerCallback('mdt:server:SearchVehicles', function(result)
         p:resolve(result)
     end, data.name)
 
@@ -585,7 +585,7 @@ RegisterNUICallback("saveVehicleInfo", function(data, cb)
             end
 
             if found == 0 then
-                exports['qbr-core']:Notify('Vehicle not found!', 'error')
+                QBCore.Functions.Notify('Vehicle not found!', 'error')
                 SendNUIMessage({ type = "redImpound" })
             end
         else
@@ -669,9 +669,9 @@ RegisterNetEvent('mdt:client:setRadio', function(radio)
     if type(tonumber(radio)) == "number" then
         exports["pma-voice"]:setVoiceProperty("radioEnabled", true)
         exports["pma-voice"]:setRadioChannel(tonumber(radio))
-        exports['qbr-core']:Notify("You have set your radio frequency to "..radio..".", "success")
+        QBCore.Functions.Notify("You have set your radio frequency to "..radio..".", "success")
     else
-        exports['qbr-core']:Notify("Invalid Station(Please enter a number)", "error")
+        QBCore.Functions.Notify("Invalid Station(Please enter a number)", "error")
     end
 end)
 
@@ -721,7 +721,7 @@ RegisterNUICallback("callDetach", function(data, cb)
 end)
 
 RegisterNUICallback("removeCallBlip", function(data, cb)
-    TriggerEvent('ps-dispatch:client:removeCallBlip', data.callid)
+    TriggerEvent('psr-dispatch:client:removeCallBlip', data.callid)
     cb(true)
 end)
 
@@ -811,7 +811,7 @@ end)
         end
 
         if found == 0 then
-            exports['qbr-core']:Notify('Vehicle not found!', 'error')
+            QBCore.Functions.Notify('Vehicle not found!', 'error')
             return
         end
 
